@@ -1,0 +1,26 @@
+version: "3.4"
+services:
+  postgres-backend:
+    image: "postgres:alpine"
+    volumes:
+      - ./data/postgres-backend:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: "db3mw"
+      POSTGRES_HOST: "postgres-backend"
+      POSTGRES_USER: "postgres"
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: "./3mw-backend-service/"
+      dockerfile: docker/development.Dockerfile
+    ports:
+      - 8000:8080
+    environment:
+      DATABASE_URL: "postgresql://postgres@postgres/db3mw"
+    volumes:
+      - ./3mw-backend-service:/app
+    restart: always
+    depends_on:
+      - postgres-backend
