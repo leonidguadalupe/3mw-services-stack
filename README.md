@@ -25,7 +25,7 @@ git clone https://github.com/leonidguadalupe/3mw-frontend-service.git
 ```
 * clone monitoring repository if available
 ```bash
-git clone https://github.com/leonidguadalupe/3mw-frontend-service.git
+git clone https://github.com/<repo>/3mw-monitoring-service.git
 ```
 * build the containers
 ```bash
