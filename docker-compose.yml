@@ -25,3 +25,22 @@ services:
     restart: always
     depends_on:
       - postgres-backend
+
+  frontend:
+    build:
+      context: "./3mw-frontend-service/"
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ./3mw-frontend-service:/app
+    depends_on:
+      - backend
+  
+  nginx:
+    image: nginx:latest
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx/nginx-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./3mw-frontend-service/src/3mw_frontend_service/build:/var/www/frontend
+    depends_on:
+      - backend
