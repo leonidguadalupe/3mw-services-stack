@@ -25,3 +25,51 @@ services:
     restart: always
     depends_on:
       - postgres-backend
+
+  frontend:
+    build:
+      context: "./3mw-frontend-service/"
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ./3mw-frontend-service:/app
+    depends_on:
+      - backend
+  
+  nginx:
+    image: nginx:latest
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx/nginx-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./3mw-frontend-service/src/3mw_frontend_service/build:/var/www/frontend
+    depends_on:
+      - backend
+      - monitoring
+
+  postgres-monitoring:
+    image: "postgres:alpine"
+    volumes:
+      - ./data/postgres-backend:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: "db3mw"
+    ports:
+      - "5433:5432"
+    depends_on:
+      - backend
+    
+  monitoring:
+    build:
+      context: "./3mw-monitoring-service/"
+      dockerfile: docker/development.Dockerfile
+    ports:
+      - 5000:5000
+    environment:
+      DATABASE_URL: "postgresql://postgres@postgres/db3mw"
+      POSTGRES_DB: "db3mwmonitoring"
+      POSTGRES_HOST: "postgres-monitoring"
+      POSTGRES_USER: "postgres"
+    volumes:
+      - ./3mw-monitoring-service:/app
+    restart: always
+    depends_on:
+      - postgres-monitoring
