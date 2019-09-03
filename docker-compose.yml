@@ -8,7 +8,8 @@ services:
       POSTGRES_DB: "db3mw"
     ports:
       - "5432:5432"
-
+  redis:
+    image: "redis:alpine"
   backend:
     build:
       context: "./3mw-backend-service/"
@@ -25,7 +26,6 @@ services:
     restart: always
     depends_on:
       - postgres-backend
-
   frontend:
     build:
       context: "./3mw-frontend-service/"
@@ -34,7 +34,7 @@ services:
       - ./3mw-frontend-service:/app
     depends_on:
       - backend
-  
+      - redis
   nginx:
     image: nginx:latest
     ports:
@@ -44,3 +44,60 @@ services:
       - ./3mw-frontend-service/src/3mw_frontend_service/build:/var/www/frontend
     depends_on:
       - backend
+      - monitoring
+  postgres-monitoring:
+    image: "postgres:alpine"
+    volumes:
+      - ./data/postgres-backend:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: "db3mw"
+    ports:
+      - "5433:5432"
+    depends_on:
+      - backend
+  monitoring:
+    build:
+      context: "./3mw-monitoring-service/"
+      dockerfile: docker/development.Dockerfile
+    ports:
+      - 5000:5000
+    environment:
+      DATABASE_URL: "postgresql://postgres@postgres/db3mw"
+      POSTGRES_DB: "db3mwmonitoring"
+      POSTGRES_HOST: "postgres-monitoring"
+      POSTGRES_USER: "postgres"
+    volumes:
+      - ./3mw-monitoring-service:/app
+    restart: always
+    depends_on:
+      - postgres-monitoring
+  celery:
+    build: 
+      context: "./3mw-backend-service/"
+      dockerfile: docker/task.Dockerfile
+    command: "celery --pidfile= -A src.3mw_backend_service.app.celery worker -l info"
+    environment:
+      DATABASE_URL: "postgresql://postgres@postgres/db3mw"
+      POSTGRES_DB: "db3mw"
+      POSTGRES_HOST: "postgres-backend"
+      POSTGRES_USER: "postgres"
+    volumes:
+      - ./3mw-backend-service:/app
+    depends_on:
+      - postgres-backend
+      - redis
+  celery-beat:
+    build:
+      context: "./3mw-backend-service/"
+      dockerfile: docker/task.Dockerfile
+    command: "celery --pidfile= -A src.3mw_backend_service.app.celery beat -l info"
+    environment:
+      DATABASE_URL: "postgresql://postgres@postgres/db3mw"
+      POSTGRES_DB: "db3mw"
+      POSTGRES_HOST: "postgres-backend"
+      POSTGRES_USER: "postgres"
+    volumes:
+      - ./3mw-backend-service:/app
+    depends_on:
+      - postgres-backend
+      - redis
