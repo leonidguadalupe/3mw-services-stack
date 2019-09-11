@@ -41,6 +41,8 @@ docker exec -it -u 0 3mw_services_backend_1 /bin/sh
 cd src/3mw_backend_service
 python manage.py migrate
 ```
+and then go to [http://localhost](http://localhost)
+
 Note: I personally didn't automate this process as it's kinda dangerous to automate the migration process. I believe it is something that should be done manually. However, it all depends on practice and also when we need to do rolling deployment which we really need this kind of automation
 
 Also, there's a big possibility that this will give an error especially if the monitoring service is not yet added. the compose file depends on the monitoring service which will be provided later. By any case that the monitoring service is not available yet, please delete the monitoring service and the depend clause on the docker compose file.
